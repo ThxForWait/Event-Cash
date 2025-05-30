@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redis Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            padding: 8px;
+            flex-grow: 1;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #addBtn {
+            background-color: #28a745;
+            color: white;
+        }
+        #deleteBtn {
+            background-color: #dc3545;
+            color: white;
+        }
+        #status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+    </style>
+</head>
+<body>
+    <h1>Создай своего скибиди туалета</h1>
+
+    <div class="control-panel">
+        <div class="input-group">
+            <input type="text" id="keyInput" placeholder="Введите ключ" value="test_key">
+        </div>
+
+        <div class="button-group">
+            <button id="addBtn">Добавить ключ (TTL: 60s)</button>
+            <button id="deleteBtn">Удалить ключ</button>
+        </div>
+
+        <div id="status" class="info">Готово к работе</div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+
+        async function handleApiCall(endpoint, key) {
+            const statusElement = document.getElementById('status');
+
+            try {
+                statusElement.textContent = "Выполнение запроса...";
+                statusElement.className = "info";
+
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ key })
+                });
+
+                const result = await response.json();
+
+                if (result.status === "error") {
+                    throw new Error(result.message);
+                }
+
+                statusElement.textContent = result.message;
+                statusElement.className = "success";
+
+            } catch (error) {
+                statusElement.textContent = `Ошибка: ${error.message}`;
+                statusElement.className = "error";
+                console.error("API Error:", error);
+            }
+        }
+
+        document.getElementById('addBtn').addEventListener('click', () => {
+            const key = document.getElementById('keyInput').value.trim();
+            if (!key) {
+                alert("Пожалуйста, введите ключ");
+                return;
+            }
+            handleApiCall('/add', key);
+        });
+
+        document.getElementById('deleteBtn').addEventListener('click', () => {
+            const key = document.getElementById('keyInput').value.trim();
+            if (!key) {
+                alert("Пожалуйста, введите ключ");
+                return;
+            }
+            handleApiCall('D', key);
+        });
+    </script>
+</body>
+</html>
